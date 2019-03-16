@@ -62,13 +62,15 @@ class RaceInputStream() {
       }
     }
 
-    def parseLapNumber(lapNumber: String): Either[ParseError, Long] =
+    def parseLapNumber(lapNumber: String): Either[LapParseError, Long] = {
       Try(lapNumber.trim.toLong).toEither
         .fold(_ => Left(LapParseError(lapNumber)), v => Right(v))
+    }
 
-    def parseAvgSpeed(avgSpeed: String): Either[ParseError, Double] =
+    def parseAvgSpeed(avgSpeed: String): Either[LapParseError, Double] = {
       Try(avgSpeed.trim.replace(',', '.').toDouble).toEither
         .fold(_ => Left(LapParseError(avgSpeed)), v => Right(v))
+    }
 
     line.trim
       .split("  ")
