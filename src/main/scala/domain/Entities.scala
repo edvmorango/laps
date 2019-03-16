@@ -8,6 +8,16 @@ case class Lap(startTime: Long,
                lapTime: Long,
                avgSpeed: Double)
 
-case class Race(laps: List[Lap], remainingLaps: List[Lap], lastLap: Lap)
+case class Race(numberOfLaps: Long,
+                laps: List[Lap],
+                remainingLaps: List[Lap],
+                lastLap: Lap)
 
-case class AverageSpeed(race: Race, pilot: Pilot, speed: Double)
+case class RankingPosition(pilot: Pilot,
+                           raceTime: Long,
+                           avgSpeed: Double,
+                           extraTime: Long)
+
+case class Ranking(race: Race,
+                   positions: List[RankingPosition],
+                   complete: Boolean)
