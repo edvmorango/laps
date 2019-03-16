@@ -19,9 +19,9 @@ class RaceInputStream() {
 
     lines match {
       case Nil => Left(EmptyInput)
-      case _ :: lines =>
-        val laps = readLaps(lines, Right(Nil))
-        laps match {
+      case _ :: line =>
+        val elaps = readLaps(line, Right(Nil))
+        elaps match {
           case Right(laps) => Right(laps.reverse)
           case Left(e)     => Left(e)
         }
