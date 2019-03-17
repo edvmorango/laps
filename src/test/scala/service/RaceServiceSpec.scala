@@ -68,6 +68,49 @@ class RaceServiceSpec extends WordSpec with MustMatchers {
 
       }
 
+      "Pilots ranking" in {
+
+        val pilotsRanking = lapsM
+          .map(l => l.maxBy(_.startTime))
+          .map(l => (l.pilot, l.startTime + l.lapTime))
+          .sortBy(_._2)
+          .map(_._1)
+
+        raceService
+          .getRanking(race)
+          .positions
+          .map(_.pilot) mustBe pilotsRanking
+
+      }
+
+      "Pilots last lap" in {
+
+        val lapsWithFinish =
+          lapsM.map(lp => lp.map(l => (l.lapNumber, l.lapTime + l.startTime)))
+
+        val first =
+          lapsWithFinish.flatten
+            .filter(_._1 == race.numberOfLaps)
+            .min
+            ._2
+
+        val lastLaps = lapsWithFinish
+          .sortBy(l => l.map(_._2).max)
+          .map { l =>
+            val lapsB = l.filter(_._2 <= first)
+            if (lapsB.isEmpty)
+              0
+            else
+              lapsB.max._1
+          }
+
+        raceService
+          .getRanking(race)
+          .positions
+          .map(_.lapsBeforeEnd) mustBe lastLaps
+
+      }
+
     }
 
   }
