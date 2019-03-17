@@ -17,8 +17,7 @@ object Main extends App {
       println(race)
       println(raceService.getBestLap(race))
       println(raceService.getPilotsBestLap(race))
-      println(raceService.getRanking(race, complete = false))
-      println(raceService.getRanking(race, complete = true))
+      println(raceService.getRanking(race))
 
     case Left(e) =>
       e match {

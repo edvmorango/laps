@@ -10,7 +10,7 @@ trait RaceService {
 
   def getPilotsBestLap(race: Race): List[Lap]
 
-  def getRanking(race: Race, complete: Boolean): Ranking
+  def getRanking(race: Race): Ranking
 }
 
 class RaceServiceImpl extends RaceService {
@@ -42,16 +42,16 @@ class RaceServiceImpl extends RaceService {
 
   }
 
-  def getRanking(race: Race, complete: Boolean): Ranking = {
+  def getRanking(race: Race): Ranking = {
 
     type PartialRanking = (Pilot, Long, Double)
 
     def aggSpeed(lap: Lap, acc: (Double, Int)) =
-      (acc._1 + lap.avgSpeed, acc._2 + 11)
+      (acc._1 + lap.avgSpeed, acc._2 + 1)
 
     def aggRaceTime(lap: Lap, acc: Long) = acc + lap.lapTime
 
-    val laps = if (complete) race.laps ++ race.remainingLaps else race.laps
+    val laps = race.laps ++ race.remainingLaps
 
     val groups = laps.groupBy(_.pilot).toList
 
@@ -77,7 +77,7 @@ class RaceServiceImpl extends RaceService {
         }
         .reverse
 
-    Ranking(race, positions, complete)
+    Ranking(race, positions)
 
   }
 

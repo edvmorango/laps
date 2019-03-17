@@ -18,6 +18,4 @@ case class RankingPosition(pilot: Pilot,
                            avgSpeed: Double,
                            extraTime: Long)
 
-case class Ranking(race: Race,
-                   positions: List[RankingPosition],
-                   complete: Boolean)
+case class Ranking(race: Race, positions: List[RankingPosition])
