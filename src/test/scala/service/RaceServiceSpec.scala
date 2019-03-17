@@ -1,7 +1,7 @@
 package service
 
 import org.scalatest.{MustMatchers, WordSpec}
-import fixtures.Fixtures._
+import fixtures.LapsFixtures._
 
 class RaceServiceSpec extends WordSpec with MustMatchers {
 
@@ -54,7 +54,24 @@ class RaceServiceSpec extends WordSpec with MustMatchers {
         raceService
           .getRanking(race)
           .positions
-          .map(_.avgSpeed) mustBe List(pilotASpeed, pilotBSpeed, pilotCSpeed).sorted
+          .map(_.avgSpeed) mustBe List(pilotASpeed, pilotBSpeed, pilotCSpeed)
+          .sortWith(_ > _)
+
+      }
+
+      "Pilots difference between first in time" in {
+
+        val lasts =
+          lapsM
+            .map(_.find(l => l.lapNumber == 4).get)
+            .map(l => l.startTime + l.lapTime)
+            .sorted
+
+        val head = lasts.head
+
+        val diffs = lasts.map(_ - head)
+
+        raceService.getRanking(race).positions.map(_.extraTime) mustBe diffs
 
       }
 

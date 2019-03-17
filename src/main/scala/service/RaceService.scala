@@ -11,6 +11,7 @@ trait RaceService {
   def getPilotsBestLap(race: Race): List[Lap]
 
   def getRanking(race: Race): Ranking
+
 }
 
 class RaceServiceImpl extends RaceService {
@@ -44,38 +45,32 @@ class RaceServiceImpl extends RaceService {
 
   def getRanking(race: Race): Ranking = {
 
-    type PartialRanking = (Pilot, Long, Double)
-
-    def aggSpeed(lap: Lap, acc: (Double, Int)) =
-      (acc._1 + lap.avgSpeed, acc._2 + 1)
-
-    def aggRaceTime(lap: Lap, acc: Long) = acc + lap.lapTime
+    type PartialRanking = (Pilot, Long, Long, Double)
 
     val laps = race.laps ++ race.remainingLaps
 
     val groups = laps.groupBy(_.pilot).toList
 
-    val partial: List[PartialRanking] = groups.map { g =>
-      val (speed, laps) = g._2.foldRight((0.0, 0))(aggSpeed)
+    val partial: List[PartialRanking] = groups
+      .map { g =>
+        val (pilot, laps) = g
 
-      val avgSpeed = speed / laps.toDouble
-      val totalTime = g._2.foldRight(0L)(aggRaceTime)
+        val avgSpeed = laps.map(_.avgSpeed).sum / laps.length
 
-      (g._1, totalTime, avgSpeed)
+        val totalTime =
+          laps.foldRight(0L)((l, acc) => acc + l.lapTime)
 
-    }
+        val endTime = totalTime + laps.head.startTime
 
-    val positions: List[RankingPosition] =
-      partial
-        .foldLeft[List[RankingPosition]](Nil) { (acc, a) =>
-          {
-            if (acc.isEmpty)
-              List(RankingPosition(a._1, a._2, a._3, 0))
-            else
-              RankingPosition(a._1, a._2, a._3, a._2 - acc.head.raceTime) :: acc
-          }
-        }
-        .reverse
+        (pilot, endTime, totalTime, avgSpeed)
+
+      }
+      .sortBy(_._2)
+
+    val firstEndTime = partial.head._2
+
+    val positions: List[RankingPosition] = partial.map(a =>
+      RankingPosition(a._1, a._2, a._3, a._4, a._2 - firstEndTime))
 
     Ranking(race, positions)
 

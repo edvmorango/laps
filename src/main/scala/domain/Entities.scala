@@ -14,6 +14,7 @@ case class Race(numberOfLaps: Long,
                 lastLap: Lap)
 
 case class RankingPosition(pilot: Pilot,
+                           endTime: Long,
                            raceTime: Long,
                            avgSpeed: Double,
                            extraTime: Long)
