@@ -34,28 +34,21 @@ class RaceServiceSpec extends WordSpec with MustMatchers {
 
       "Pilots best lap " in {
 
-        val bestA = lapsA.minBy(_.lapTime)
-        val bestB = lapsB.minBy(_.lapTime)
-        val bestC = lapsC.minBy(_.lapTime)
+        val bestLaps = lapsM.map(l => l.minBy(_.lapTime).lapTime).sorted
 
-        raceService.getPilotsBestLap(race).map(_.lapTime).sorted mustBe List(
-          bestA,
-          bestB,
-          bestC).map(_.lapTime).sorted
-
+        raceService.getPilotsBestLap(race).map(_.lapTime).sorted mustBe bestLaps
       }
 
       "Pilots average speed" in {
 
-        val pilotASpeed = lapsA.map(_.avgSpeed).sum / 4
-        val pilotBSpeed = lapsB.map(_.avgSpeed).sum / 4
-        val pilotCSpeed = lapsC.map(_.avgSpeed).sum / 4
+        val avgSpeedList = lapsM
+          .map(l => l.map(_.avgSpeed).sum / 4)
+          .sortWith(_ > _)
 
         raceService
           .getRanking(race)
           .positions
-          .map(_.avgSpeed) mustBe List(pilotASpeed, pilotBSpeed, pilotCSpeed)
-          .sortWith(_ > _)
+          .map(_.avgSpeed) mustBe avgSpeedList
 
       }
 

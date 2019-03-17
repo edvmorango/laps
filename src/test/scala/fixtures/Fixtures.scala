@@ -27,7 +27,7 @@ object LapsFixtures {
   val lapsB = List(lapB1, lapB2, lapB3, lapB4)
   val lapsC = List(lapC1, lapC2, lapC3, lapC4)
 
-  val laps = (lapsA ++ lapsB ++ lapsC).sortBy(_.startTime)
+  val laps: List[Lap] = (lapsA ++ lapsB ++ lapsC).sortBy(_.startTime)
 
   val lapsM = List(lapsA, lapsB, lapsC)
 }
