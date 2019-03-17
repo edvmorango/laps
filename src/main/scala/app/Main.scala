@@ -15,9 +15,6 @@ object Main extends App {
     case Right(r) =>
       val race = raceService.startRace(r, 4)
       println(race)
-      println(raceService.getBestLap(race))
-      println(raceService.getPilotsBestLap(race))
-      println(raceService.getRanking(race))
 
     case Left(e) =>
       e match {

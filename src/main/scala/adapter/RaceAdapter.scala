@@ -49,7 +49,7 @@ class RaceInputStream {
         .toList match {
         case id :: name :: Nil =>
           if (id.forall(_.isDigit))
-            Right(Pilot(id.toLong, name))
+            Right(Pilot(id.toInt, name))
           else
             Left(PilotParseError(stretch))
         case _ =>
@@ -57,8 +57,8 @@ class RaceInputStream {
       }
     }
 
-    def parseLapNumber(lapNumber: String): Either[LapParseError, Long] = {
-      Try { lapNumber.trim.toLong }.toEither
+    def parseLapNumber(lapNumber: String): Either[LapParseError, Int] = {
+      Try { lapNumber.trim.toInt }.toEither
         .fold(_ => Left(LapParseError(lapNumber)), Right(_))
     }
 

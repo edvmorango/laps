@@ -4,7 +4,7 @@ import domain._
 
 trait RaceService {
 
-  def startRace(laps: List[Lap], numberOfLaps: Long): Race
+  def startRace(laps: List[Lap], numberOfLaps: Int): Race
 
   def getBestLap(race: Race): Lap
 
@@ -16,7 +16,7 @@ trait RaceService {
 
 class RaceServiceImpl extends RaceService {
 
-  def startRace(laps: List[Lap], numberOfLaps: Long): Race = {
+  def startRace(laps: List[Lap], numberOfLaps: Int): Race = {
 
     val (raceLaps, remainingLaps) = laps.span(_.lapNumber != numberOfLaps)
 
@@ -45,15 +45,17 @@ class RaceServiceImpl extends RaceService {
 
   def getRanking(race: Race): Ranking = {
 
-    type PartialRanking = (Pilot, Long, Long, Double)
+    type PartialRanking = (Pilot, Long, Long, Double, List[(Int, Long)])
 
     val laps = race.laps ++ race.remainingLaps
 
-    val groups = laps.groupBy(_.pilot).toList
+    val pilots = laps.map(_.pilot).distinct
+
+    val groups = laps.groupBy(_.pilot.id).toList
 
     val partial: List[PartialRanking] = groups
       .map { g =>
-        val (pilot, laps) = g
+        val (pilotId, laps) = g
 
         val avgSpeed = laps.map(_.avgSpeed).sum / laps.length
 
@@ -62,16 +64,36 @@ class RaceServiceImpl extends RaceService {
 
         val endTime = totalTime + laps.head.startTime
 
-        (pilot, endTime, totalTime, avgSpeed)
+        val lapsFinishTime =
+          laps.map(l => (l.lapNumber, l.startTime + l.lapTime))
+
+        (pilots.find(_.id == pilotId).get,
+         endTime,
+         totalTime,
+         avgSpeed,
+         lapsFinishTime)
 
       }
       .sortBy(_._2)
 
     val firstEndTime = partial.head._2
 
-    val positions: List[RankingPosition] = partial.map(a =>
-      RankingPosition(a._1, a._2, a._3, a._4, a._2 - firstEndTime))
+    val positions: List[RankingPosition] = partial.zipWithIndex.map { ai =>
+      val (r, p) = ai
 
+      val laps = r._5.filter(_._2 <= firstEndTime).map(_._1)
+
+      val lapBeforeEnd = if (laps.isEmpty) 0 else laps.max
+
+      RankingPosition(p + 1,
+                      r._1,
+                      r._2,
+                      r._3,
+                      r._4,
+                      lapBeforeEnd,
+                      r._2 - firstEndTime)
+
+    }
     Ranking(race, positions)
 
   }
