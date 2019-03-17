@@ -9,41 +9,36 @@ import scala.annotation.tailrec
 import scala.io.Source
 import scala.util.Try
 
-class RaceInputStream() {
+class RaceInputStream {
 
-  private type ELaps = Either[CError, List[Lap]]
+  type ELaps = Either[CError, List[Lap]]
 
-  def readRace(stream: InputStream): Either[CError, List[Lap]] = {
+  def readRace(stream: InputStream): ELaps = {
 
     val lines = Source.fromInputStream(stream).getLines().toList
 
     lines match {
       case Nil => Left(EmptyInput)
       case _ :: line =>
-        val elaps = readLaps(line, Right(Nil))
-        elaps match {
-          case Right(laps) => Right(laps.reverse)
-          case Left(e)     => Left(e)
-        }
+        readLaps(line)
+          .fold(Left(_), l => Right(l.reverse))
     }
 
   }
 
   @tailrec
-  private def readLaps(lines: List[String], acc: ELaps): ELaps = {
+  private def readLaps(lines: List[String], acc: ELaps = Right(Nil)): ELaps = {
     (acc.isLeft, lines) match {
       case (true, _) => acc
       case (_, Nil)  => acc
       case (_, h :: t) =>
-        val lap = parseLap(h)
-        if (lap.isLeft)
-          readLaps(Nil, Left(lap.left.get))
-        else {
-          val nAcc = lap.right.get :: acc.right.get
-          readLaps(t, Right(nAcc))
+        parseLap(h) match {
+          case Left(e) =>
+            readLaps(Nil, Left(e))
+          case Right(l) =>
+            readLaps(t, acc.map(acc => l :: acc))
         }
     }
-
   }
 
   private def parseLap(line: String): Either[ParseError, Lap] = {
@@ -63,42 +58,55 @@ class RaceInputStream() {
     }
 
     def parseLapNumber(lapNumber: String): Either[LapParseError, Long] = {
-      Try(lapNumber.trim.toLong).toEither
-        .fold(_ => Left(LapParseError(lapNumber)), v => Right(v))
+      Try { lapNumber.trim.toLong }.toEither
+        .fold(_ => Left(LapParseError(lapNumber)), Right(_))
     }
 
     def parseAvgSpeed(avgSpeed: String): Either[LapParseError, Double] = {
-      Try(avgSpeed.trim.replace(',', '.').toDouble).toEither
-        .fold(_ => Left(LapParseError(avgSpeed)), v => Right(v))
+      Try {
+        avgSpeed.trim
+          .replace(',', '.')
+          .toDouble
+      }.toEither
+        .fold(_ => Left(LapParseError(avgSpeed)), Right(_))
     }
 
-    line.trim
+    def parseElements(startTime: String,
+                      pilotStretch: String,
+                      lapNumber: String,
+                      lapTime: String,
+                      avgSpeed: String): Either[ParseError, Lap] = {
+      for {
+        pStartTime <- TimeParser.validTimeToMillis(startTime)
+        pilot <- parsePilot(pilotStretch)
+        plapNumber <- parseLapNumber(lapNumber)
+        pLapTime <- TimeParser.validTimeToMillis(lapTime)
+        pAvgSpeed <- parseAvgSpeed(avgSpeed)
+      } yield Lap(pStartTime, pilot, plapNumber, pLapTime, pAvgSpeed)
+
+    }
+
+    def mapFailure(l: ParseError) = l match {
+      case LapParseError(e) =>
+        Left(LapParseError(s"Lap Parse error in: [$e] at [$line]"))
+      case TimeParserError(e) =>
+        Left(LapParseError(s"Lap Parse error in: [$e] at [$line]"))
+      case PilotParseError(e) =>
+        Left(LapParseError(s"Pilot parse error in: [$e] at lap [$line]"))
+
+    }
+
+    val sepLine = line.trim
       .split("  ")
       .filterNot(_.isBlank)
-      .toList match {
-      case startTime :: pilotStretch :: lapNumber :: lapTime :: avgSpeed :: Nil =>
-        val lap = for {
-          pStartTime <- TimeParser.validTimeToMillis(startTime)
-          pilot <- parsePilot(pilotStretch)
-          plapNumber <- parseLapNumber(lapNumber)
-          pLapTime <- TimeParser.validTimeToMillis(lapTime)
-          pAvgSpeed <- parseAvgSpeed(avgSpeed)
-        } yield Lap(pStartTime, pilot, plapNumber, pLapTime, pAvgSpeed)
+      .toList
 
-        lap.fold(
-          {
-            case LapParseError(e) =>
-              Left(LapParseError(s"Lap Parse error in: [$e] at [$line]"))
-            case PilotParseError(e) =>
-              Left(LapParseError(s"Pilot parse error in: [$e] at lap [$line]"))
-            case TimeParserError(e) =>
-              Left(LapParseError(s"Lap Parse error in: [$e] at [$line]"))
-          },
-          Right(_)
-        )
+    sepLine match {
+      case startTime :: pilotStretch :: lapNumber :: lapTime :: avgSpeed :: Nil =>
+        parseElements(startTime, pilotStretch, lapNumber, lapTime, avgSpeed)
+          .fold(mapFailure, Right(_))
 
       case _ => Left(LapParseError(line))
-
     }
 
   }
