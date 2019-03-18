@@ -1,0 +1,15 @@
+Requerimentos:
+
+Scala 2.12.8
+Java 8/11
+sbt
+
+Execução:
+
+Certifique-se de estar no diretório do projeto.
+
+Para executar o projeto:
+    sbt run
+
+Para executar os tests do projeto:
+    sbt test
