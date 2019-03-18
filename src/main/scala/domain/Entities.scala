@@ -25,6 +25,6 @@ case class RankingPosition(position: Int,
                            raceTime: Long,
                            avgSpeed: Double,
                            lapsBeforeEnd: Int,
-                           extraTime: Long)
+                           extraTimeToFinish: Long)
 
 case class Ranking(race: Race, positions: List[RankingPosition])

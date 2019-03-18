@@ -64,7 +64,10 @@ class RaceServiceSpec extends WordSpec with MustMatchers {
 
         val diffs = lasts.map(_ - head)
 
-        raceService.getRanking(race).positions.map(_.extraTime) mustBe diffs
+        raceService
+          .getRanking(race)
+          .positions
+          .map(_.extraTimeToFinish) mustBe diffs
 
       }
 
