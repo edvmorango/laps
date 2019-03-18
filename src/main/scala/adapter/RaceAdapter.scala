@@ -92,8 +92,7 @@ class RaceInputStream {
       case TimeParserError(e) =>
         Left(LapParseError(s"Lap Parse error in: [$e] at [$line]"))
       case PilotParseError(e) =>
-        Left(LapParseError(s"Pilot parse error in: [$e] at lap [$line]"))
-
+        Left(PilotParseError(s"Pilot parse error in: [$e] at lap [$line]"))
     }
 
     val sepLine = line.trim
